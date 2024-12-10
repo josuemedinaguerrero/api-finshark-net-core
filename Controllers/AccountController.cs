@@ -63,8 +63,8 @@ namespace api.Controllers
             if (!result.Succeeded) return Unauthorized("Username not found and/or password incorrect");
 
             return Ok(new NewUserDto {
-                UserName = user.UserName,
-                Email = user.Email,
+                UserName = user.UserName!,
+                Email = user.Email!,
                 Token = _tokenService.CreateToken(user)
             });
         }
