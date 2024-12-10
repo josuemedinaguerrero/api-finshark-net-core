@@ -4,7 +4,6 @@ using api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client;
 
 namespace api.Controllers
 {
@@ -69,6 +68,28 @@ namespace api.Controllers
             if (portfolioModel == null) return StatusCode(500, "Could not create");
 
             return Created();
+        }
+
+        [HttpDelete]
+        [Authorize]
+        public async Task<IActionResult> DeletePortfolio(string symbol) {
+            var username = User.FindFirst(ClaimTypes.GivenName)?.Value;
+            if (username == null) return NotFound("No username found in the token");
+
+            var appUser = await _userManager.FindByNameAsync(username);
+            if (appUser == null) return Unauthorized("User not found");
+
+            var userPortfolio = await _portfolioRepository.GetUserPortfolio(appUser);
+
+            var filteredStock = userPortfolio.Where(s => s.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase));
+
+            if (filteredStock.Count() == 1) {
+                await _portfolioRepository.DeletePortfolio(appUser, symbol);
+            } else {
+                return BadRequest("Stock not in your portfolio");
+            }
+
+            return Ok();
         }
     }
 }
